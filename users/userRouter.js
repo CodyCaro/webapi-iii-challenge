@@ -1,11 +1,18 @@
 const express = require("express");
 
 const userDB = require("./userDb");
+const postDB = require("../posts/postDb");
 const router = express.Router();
 
-router.post("/", (req, res) => {});
+router.post("/", validateUser, (req, res) => {
+  userDB.insert(req.body);
+  res.status(200).json(req.body);
+});
 
-router.post("/:id/posts", (req, res) => {});
+router.post("/:id/posts", validateUserId, validatePost, async (req, res) => {
+  postDB.insert(req.body);
+  res.status(200).json(req.body);
+});
 
 router.get("/", async (req, res) => {
   try {
@@ -26,7 +33,17 @@ router.get("/:id", validateUserId, (req, res) => {
   res.status(200).json(req.user);
 });
 
-router.get("/:id/posts", (req, res) => {});
+router.get("/:id/posts", validateUserId, async (req, res) => {
+  const posts = await userDB.getUserPosts(req.params.id);
+
+  if (posts) {
+    res.status(200).json(posts);
+  } else {
+    res.status(400).json({
+      message: "There are no posts"
+    });
+  }
+});
 
 router.delete("/:id", (req, res) => {});
 
@@ -54,8 +71,36 @@ async function validateUserId(req, res, next) {
   }
 }
 
-function validateUser(req, res, next) {}
+async function validateUser(req, res, next) {
+  try {
+    if ("name" in req.body) {
+      next();
+    } else {
+      res.status(400).json({ message: "missing required name field" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "exception",
+      error
+    });
+  }
+}
 
-function validatePost(req, res, next) {}
+async function validatePost(req, res, next) {
+  try {
+    if ("text" in req.body) {
+      next();
+    } else {
+      res.status(400).json({ message: "missing required text field" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "exception",
+      error
+    });
+  }
+}
 
 module.exports = router;
