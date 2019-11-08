@@ -56,7 +56,15 @@ router.delete("/:id", validateUserId, async (req, res) => {
   }
 });
 
-router.put("/:id", (req, res) => {});
+router.put("/:id", validateUserId, validateUser, async (req, res) => {
+  const user = await userDB.update(req.params.id, req.body);
+
+  if (user) {
+    res.status(200).json({
+      message: `Your new name is ${req.body.name}`
+    });
+  }
+});
 
 //custom middleware
 
